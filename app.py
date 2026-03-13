@@ -25,6 +25,8 @@ def transcrire():
     telephone     = request.form.get("From", "Inconnu")
     call_sid      = request.form.get("CallSid", "")
 
+    print(f"CallStatus reçu: {call_status}")
+    print(f"Tous les paramètres: {request.form}")
     if call_status != "completed":
         return "", 200
 
