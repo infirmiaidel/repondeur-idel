@@ -34,7 +34,7 @@ def transcrire():
 
     print(f"CallStatus reçu: {call_status}")
     print(f"Tous les paramètres: {request.form}")
-    if call_status != "completed":
+    if call_status and call_status != "completed":
         return "", 200
 
     # Attendre que l'enregistrement soit prêt
