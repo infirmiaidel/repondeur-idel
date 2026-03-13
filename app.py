@@ -21,7 +21,8 @@ client_openai = openai.OpenAI(api_key=OPENAI_KEY)
 
 @app.route("/start_recording", methods=["POST"])
 def start_recording():
-    call_sid = request.form.get("CallSid")
+    body = request.form.get("body", "")
+    call_sid = request.form.get("CallSid") or (body.split("CallSid=")[-1].split("&")[0] if "CallSid=" in body else None)
     client_twilio.calls(call_sid).recordings.create()
     return "", 200
 
