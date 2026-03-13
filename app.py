@@ -19,8 +19,14 @@ OPENAI_KEY    = os.environ.get("OPENAI_API_KEY")
 client_twilio = Client(TWILIO_SID, TWILIO_TOKEN)
 client_openai = openai.OpenAI(api_key=OPENAI_KEY)
 
-@app.route("/transcrire", methods=["POST"])
-def transcrire():
+    @app.route("/start_recording", methods=["POST"])
+    def start_recording():
+    call_sid = request.form.get("CallSid")
+    client_twilio.calls(call_sid).recordings.create()
+    return "", 200
+
+    @app.route("/transcrire", methods=["POST"])
+    def transcrire():
     call_status   = request.form.get("CallStatus", "")
     telephone     = request.form.get("From", "Inconnu")
     call_sid      = request.form.get("CallSid", "")
