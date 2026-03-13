@@ -6,6 +6,7 @@ from twilio.rest import Client
 import openai
 import requests
 from io import BytesIO
+import time
 
 app = Flask(__name__)
 
@@ -20,19 +21,29 @@ client_openai = openai.OpenAI(api_key=OPENAI_KEY)
 
 @app.route("/transcrire", methods=["POST"])
 def transcrire():
-    # 1. Récupérer les infos envoyées par Twilio
-    recording_url = request.form.get("RecordingUrl", "") + ".mp3"
-    recording_sid = request.form.get("RecordingSid", "")
+    call_status   = request.form.get("CallStatus", "")
     telephone     = request.form.get("From", "Inconnu")
-    flux          = request.form.get("flux", "Inconnu")
+    call_sid      = request.form.get("CallSid", "")
 
-    # 2. Télécharger l'audio
+    if call_status != "completed":
+        return "", 200
+
+    # Attendre que l'enregistrement soit prêt
+    time.sleep(5)
+
+    # Récupérer l'enregistrement
+    recordings = client_twilio.recordings.list(call_sid=call_sid, limit=1)
+    if not recordings:
+        return "", 200
+
+    recording = recordings[0]
+    recording_url = f"https://api.twilio.com/2010-04-01/Accounts/{TWILIO_SID}/Recordings/{recording.sid}.mp3"
+
     audio_bytes = requests.get(
         recording_url,
         auth=(TWILIO_SID, TWILIO_TOKEN)
     ).content
 
-    # 3. Transcrire avec Whisper
     audio_file = BytesIO(audio_bytes)
     audio_file.name = "audio.mp3"
     transcript = client_openai.audio.transcriptions.create(
@@ -42,23 +53,20 @@ def transcrire():
     )
     texte_brut = transcript.text.strip()
 
-    # 4. Supprimer l'audio chez Twilio (RGPD)
     try:
-        client_twilio.recordings(recording_sid).delete()
+        client_twilio.recordings(recording.sid).delete()
     except Exception:
         pass
 
-    # 5. GPT reformule en message professionnel
     prompt = f"""Tu es un assistant pour une infirmière libérale.
-Voici un message vocal brut laissé par un appelant :
+Voici la transcription complète d'un appel téléphonique :
 
-- Type d'appel : {flux}
-- Telephone : {telephone}
-- Message : {texte_brut}
+- Téléphone : {telephone}
+- Transcription : {texte_brut}
 
-Rédige un message WhatsApp professionnel, clair et bien formaté pour l'infirmière.
-Corrige les fautes et reformule si nécessaire.
-Le message doit être sobre et professionnel, sans emojis."""
+Rédige un message WhatsApp professionnel, clair et bien structuré pour l'infirmière.
+Extrais et présente : nom/prénom, motif, coordonnées, disponibilités.
+Corrige les fautes. Message sobre et professionnel, sans emojis."""
 
     reponse = client_openai.chat.completions.create(
         model="gpt-4o",
@@ -66,7 +74,6 @@ Le message doit être sobre et professionnel, sans emojis."""
     )
     message_final = reponse.choices[0].message.content
 
-    # 6. Envoyer le WhatsApp
     client_twilio.messages.create(
         from_=f"whatsapp:{TWILIO_PHONE}",
         to=WHATSAPP_DEST,
