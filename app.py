@@ -29,8 +29,9 @@ def start_recording():
 @app.route("/transcrire", methods=["POST"])
 def transcrire():
     call_status   = request.form.get("CallStatus", "")
-    telephone     = request.form.get("From", "Inconnu")
-    call_sid      = request.form.get("CallSid", "")
+    body = request.form.get("body", "")
+    call_sid = request.form.get("CallSid") or (body.split("CallSid=")[-1].split("&")[0] if "CallSid=" in body else "")
+    telephone = request.form.get("From") or (body.split("From=")[-1].split("&")[0] if "From=" in body else "Inconnu")
 
     print(f"CallStatus reçu: {call_status}")
     print(f"Tous les paramètres: {request.form}")
