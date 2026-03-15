@@ -33,6 +33,8 @@ def transcrire():
     call_sid = request.form.get("CallSid") or (body.split("CallSid=")[-1].split("&")[0] if "CallSid=" in body else "")
     telephone = request.form.get("From") or (body.split("From=")[-1].split("&")[0] if "From=" in body else "Inconnu")
 
+    print(f"CallSid extrait: {call_sid}")
+    print(f"Telephone extrait: {telephone}")
     print(f"CallStatus reçu: {call_status}")
     print(f"Tous les paramètres: {request.form}")
     if call_status and call_status != "completed":
