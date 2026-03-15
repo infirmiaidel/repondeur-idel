@@ -41,7 +41,7 @@ def transcrire():
         return "", 200
 
     # Attendre que l'enregistrement soit prêt
-    time.sleep(15)
+    time.sleep(8)
 
     # Récupérer l'enregistrement
     recordings = client_twilio.recordings.list(call_sid=call_sid, limit=1)
