@@ -84,7 +84,7 @@ Corrige les fautes. Message sobre et professionnel, sans emojis."""
     message_final = reponse.choices[0].message.content
 
     client_twilio.messages.create(
-        from_=f"whatsapp:{TWILIO_PHONE}",
+        from_=f"whatsapp:+14155238886",
         to=WHATSAPP_DEST,
         body=message_final
     )
